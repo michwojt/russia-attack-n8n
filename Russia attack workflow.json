@@ -1,0 +1,429 @@
+{
+  "name": "News Intelligence - Phase 1",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://newsapi.org/v2/everything",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "Russia NATO"
+            },
+            {
+              "name": "language",
+              "value": "en"
+            },
+            {
+              "name": "sortBy",
+              "value": "publishedAt"
+            },
+            {
+              "name": "pageSize",
+              "value": "5"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Api-Key",
+              "value": "api-key"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        224,
+        0
+      ],
+      "id": "a316d76c-b869-414a-b05f-ff04694e5f2f",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "articles",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        448,
+        0
+      ],
+      "id": "7a65913a-d7cf-4f92-b212-7f3170d2b2ca",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "d6q2q7g7aaxyrIJI",
+          "mode": "list",
+          "cachedResultName": "news_articles",
+          "cachedResultUrl": "/projects/AOXOfbithwJZSlhx/datatables/d6q2q7g7aaxyrIJI"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "title": "={{ $json.title }}",
+            "description": "={{ $json.description }}",
+            "url": "={{ $json.url }}",
+            "publishedAt": "={{ $json.publishedAt }}",
+            "content": "={{ $json.content }}",
+            "author": "={{ $json.author }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "description",
+              "displayName": "description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "url",
+              "displayName": "url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "author",
+              "displayName": "author",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "publishedAt",
+              "displayName": "publishedAt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "content",
+              "displayName": "content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        912,
+        0
+      ],
+      "id": "922dd76b-cd9b-48da-9e1a-34e9fb40f9eb",
+      "name": "Insert row"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "seconds",
+              "secondsInterval": 1
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -176,
+        0
+      ],
+      "id": "7d1e897b-8644-4d5e-b647-b71fb6dc85d1",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "rowNotExists",
+        "dataTableId": {
+          "__rl": true,
+          "value": "d6q2q7g7aaxyrIJI",
+          "mode": "list",
+          "cachedResultName": "news_articles",
+          "cachedResultUrl": "/projects/AOXOfbithwJZSlhx/datatables/d6q2q7g7aaxyrIJI"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "=url",
+              "keyValue": "={{ $json.url }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        672,
+        0
+      ],
+      "id": "b0d544da-19a3-4149-918c-f7cc22da33fa",
+      "name": "If row does not exist"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://jev-ai.org/api/v1/systemone/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer api-key"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({\n  model: \"typesafe/jev-1.13\",\n  state: $json.title + \"\\n\\n\" + $json.description + \"\\n\\n\" + $json.content,\n  questions: {\n    relevant: {\n      type: \"noul\",\n      instructions: \"Is this article relevant to a potential Russia–NATO military confrontation?\"\n    },\n    less_probable: {\n      type: \"noul\",\n      instructions: \"Does this information make Russia attack less probable?\"\n    },\n    more_probable: {\n      type: \"noul\",\n      instructions: \"Does this information make Russia attack more probable?\"\n    }\n  }\n}) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        688,
+        272
+      ],
+      "id": "a2a95457-3612-49d5-a7f9-58aa0ce14a05",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "da5b8eb5-1686-424a-b7f7-01c8c9c85da1",
+              "leftValue": "={{ \n  $json.answers.relevant.noul >= $('Config').item.json.relevance_threshold &&\n  (\n    $json.answers.less_probable.noul >= $('Config').item.json.direction_threshold ||\n    $json.answers.more_probable.noul >= $('Config').item.json.direction_threshold\n  )\n}}",
+              "rightValue": 0.8,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        880,
+        272
+      ],
+      "id": "03f40c95-4190-410a-992f-e29dff25b171",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "fromEmail": "test@gmail.com",
+        "toEmail": "test@gmail.com",
+        "subject": "={{ \n  $json.answers.more_probable.noul >= $('Config').item.json.direction_threshold\n    ? 'HIGH - Higher chance of Russia attack'\n    : 'LOW - Lower probability of Russia attack'\n}}",
+        "html": "={{ $('If row does not exist').item.json.description }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1104,
+        176
+      ],
+      "id": "56eaa4ca-355e-44fa-81de-01b5e6e151b9",
+      "name": "Send an Email",
+      "webhookId": "71f2771c-28b8-45ed-aac7-55cb9e3ad29b",
+      "credentials": {
+        "smtp": {
+          "id": "SEkFO7Ms4zKf63KO",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ca41b87a-39b6-4ca2-be5a-d4c5e00538c2",
+              "name": "relevance_threshold",
+              "value": 0.8,
+              "type": "number"
+            },
+            {
+              "id": "70c3ad5e-efb9-4549-ae1b-d4e784660320",
+              "name": "direction_threshold",
+              "value": 0.7,
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        48,
+        0
+      ],
+      "id": "c28cc326-6ce1-46d2-b19a-9c565b9788f9",
+      "name": "Config"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "If row does not exist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If row does not exist": {
+      "main": [
+        [
+          {
+            "node": "Insert row",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send an Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send an Email": {
+      "main": [
+        []
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "b6b45895-3c97-46b7-904f-2c8788fcd7a0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c753fa94c30c7eb09c507eda47beea5f6465c26c95cbd02576a23ebb1172c9f5"
+  },
+  "nodeGroups": [],
+  "id": "HKfEf3hrm7cHaT6y",
+  "tags": []
+}
